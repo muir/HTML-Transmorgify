@@ -1,15 +1,14 @@
 
 use Parse::RecDescent;
-mkdir("blib/lib/HTML/Transmorgify");
 my $grammar;
 END { 
 	my $g = $grammar;
 	$g =~ s/db\([^()]+\);//g;
 	Parse::RecDescent->Precompile($g, "HTML::Transmorgify::Conditionals");
-	rename("Conditionals.pm", "blib/lib/HTML/Transmorgify/Conditionals.pm") or die "rename: $!";
+	rename("Conditionals.pm", "lib/HTML/Transmorgify/Conditionals.pm") or die "rename: $!";
 	$grammar =~ s/sub db/\$::RD_TRACE = 1; sub db/;
 	Parse::RecDescent->Precompile($grammar, "HTML::Transmorgify::ConditionalsDebug");
-	rename("ConditionalsDebug.pm", "blib/lib/HTML/Transmorgify/ConditionalsDebug.pm") or die "rename: $!"; 
+	rename("ConditionalsDebug.pm", "lib/HTML/Transmorgify/ConditionalsDebug.pm") or die "rename: $!";
 }
 
 $grammar = <<'END_OF_FILE';

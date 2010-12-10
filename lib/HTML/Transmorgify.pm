@@ -35,7 +35,7 @@ require Exporter;
 use Module::Load;
 use HTML::Transmorgify::Symbols;
 
-our $VERSION = 0.02;
+our $VERSION = 0.03;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(dangling);

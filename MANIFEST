@@ -4,6 +4,8 @@ lib/HTML/Transmorgify.pod
 lib/HTML/Transmorgify/Attributes.pm
 lib/HTML/Transmorgify/Attributes.pod
 lib/HTML/Transmorgify/Conditionals.pm.PL
+lib/HTML/Transmorgify/Conditionals.pm
+lib/HTML/Transmorgify/ConditionalsDebug.pm
 lib/HTML/Transmorgify/Crumbs.pm
 lib/HTML/Transmorgify/FormChecksum.pm
 lib/HTML/Transmorgify/FormDefault.pm
