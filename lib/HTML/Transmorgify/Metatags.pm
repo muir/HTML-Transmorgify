@@ -3,11 +3,12 @@ package HTML::Transmorgify::Metatags;
 
 use strict;
 use warnings;
-use HTML::Transmorgify qw(dangling eat_cr %variables $rbuf continue_compile capture_compile run $debug $modules queue_intercept rbuf boolean);
+use HTML::Transmorgify qw(dangling eat_cr %variables $rbuf compile continue_compile capture_compile run $debug $modules queue_intercept rbuf boolean bomb $input_file $input_line $original_file);
 use Scalar::Util qw(reftype blessed);
 use HTML::Entities;
 use URI::Escape;
 use List::Util;
+use File::Slurp;
 require Exporter;
 
 our @ISA = qw(HTML::Transmorgify Exporter);
@@ -125,11 +126,15 @@ sub include_tag
 
 	rbuf (sub {
 		print STDERR "# including file $attr\n" if $debug;
-		$attr->run;
+		# $attr->run;
 		my $file = $attr->get('file', 0);
-		local($HTML::Transmorgify::input_file) = findfile($file) or bomb("cannot find include file $file", attr => $attr);
+		my $ifile = findfile($file);
+		local($HTML::Transmorgify::input_file) = $ifile;
+#use Data::Dumper;
+#die Dumper($attr, $ifile, \@include_dirs) unless $ifile;
+		bomb("cannot find include file $file", attr => $attr) unless $ifile;
 		local($HTML::Transmorgify::input_line) = 1;
-		my $contents = read_file($HTML::Transmorgify::input_file);
+		my $contents = read_file($ifile);
 		local(@HTML::Transmorgify::variables{@k}) = map { $attr->get($_) } @k;
 		my $buf = compile($HTML::Transmorgify::modules, \$contents);
 		run($buf);
@@ -191,7 +196,8 @@ $tags{"/script"} = \&dangling;
 
 our %transformations = (
 	html	=> \&encode_entities,
-	uri	=> \&uri_escape,
+	uri	=> sub { uri_escape($_[0], "^A-Za-z0-9\-\._~/") },
+	url	=> sub { uri_escape($_[0], "^A-Za-z0-9\-\._~/") },
 	comment	=> sub { return '' },
 	none	=> sub { $_[0] },
 );
@@ -257,7 +263,7 @@ sub get_varset_func
 	my ($name) = @_;
 	if ($name =~ /(.+)\.([^\.]+)/) {
 		my ($cname, $ename) = ($1, $2);
-		my $container = lookup($cname, $ename);
+		my $container = lookup($cname, $ename, $cname);
 		if (blessed $container) {
 			return sub { $container->set($ename, $_[0]) };
 		} elsif (ref($container) eq 'HASH') {
@@ -274,9 +280,9 @@ sub get_varset_func
 
 sub lookup
 {
-	my ($name, $create) = @_;
+	my ($name, $create, $error_context) = @_;
 
-	if ($debug) { no warnings; print STDERR "lookup($name, $create)\n"; }
+	if ($debug) { no warnings; print STDERR "lookup($name, $create, $error_context)\n"; }
 
 	unless (defined($name) && length($name)) {
 		print STDERR "# tried to look up undef/empty!\n" if $debug;
@@ -305,10 +311,13 @@ sub lookup
 		my $key = shift @refines;
 		if (blessed $r) {
 			# should be a HTML::Transmorgify::ObjectGlue
-			$new = $r->lookup($key);
+			$new = $r->lookup($key, 0, $error_context);
 		} elsif (ref $r) {
 			if (reftype($r) eq 'ARRAY') {
-				die unless $key =~ /\A\d+\z/;
+				unless ($key =~ /\A\d+\z/) {
+					#return undef;
+					die "attempt to index into array with non-number '$key' for $error_context starting from $HTML::Transmorgify::original_file" 
+				}
 				$new = $r->[$key];
 			} elsif (reftype($r) eq 'HASH') {
 				$new = $r->{$key};
@@ -316,7 +325,8 @@ sub lookup
 				die;
 			}
 		} else {
-			die "could not look up $key with $r";
+			return undef;
+			# die "could not look up $key with $r in $input_file:$input_line for $error_context";
 		}
 		if (defined($create) && ! defined($new)) {
 			return create_container($r, $key, @refines, $create);
@@ -340,6 +350,12 @@ sub to_text
 			$r = $r->text;
 		} elsif (reftype($r) eq 'CODE') {
 			$r = $r->($attr);
+		} elsif (reftype($r) eq 'ARRAY') {
+			# XXX is this a good idea?
+			$r = join(', ', @$r);
+		} elsif (reftype($r) eq 'HASH') {
+			# XXX is this a good idea?
+			$r = join(', ', map { "$_ => $r->{$_}" } keys %$r);
 		} else {
 			die;
 		}
@@ -347,6 +363,7 @@ sub to_text
 
 	die if ref($r);
 
+	return '' unless defined $r;
 	return $r;
 }
 
@@ -359,9 +376,9 @@ sub macro
 
 	printf STDERR "# macro '%s' encode='%s'\n", dstring($name), $encode if $debug;
 
-	my $r = to_text(lookup($name), $attr);
+	my $r = to_text(lookup($name, 0, $attr), $attr);
 
-	die unless $transformations{$encode};
+	die "no transformation '$encode' defined" unless $transformations{$encode};
 
 	printf STDERR "# before tranform %s: '%s'\n", $encode, $r if $debug;
 	$r = $transformations{$encode}->($r);
@@ -416,7 +433,7 @@ sub foreach_tag
 		die unless @containers;
 		my @a;
 		for my $container (@containers) {
-			my $r = lookup($container);
+			my $r = lookup($container, 0, $attr);
 			printf STDERR "# container value: %s.\n", dstring($r) if $debug;
 			if (blessed($r)) {
 				my @e = $r->expand();
@@ -488,6 +505,7 @@ sub if_tag
 
 		local($HTML::Transmorgify::rbuf) = $current->{rbuf};
 		my $buf = capture_compile("if", $attr, $tag_package,
+			if => \&if_tag,
 			else => $found,
 			elsif => $found,
 			"/if" => \&return_false);
@@ -533,6 +551,7 @@ our %allowed_functions = (
 	abs	=> sub { abs($_[0]) },
 	min	=> \&List::Util::min,
 	max	=> \&List::Util::max,
+	defined	=> sub { defined($_[0]) },
 );
 
 use HTML::Transmorgify::Conditionals;
@@ -546,7 +565,7 @@ sub conditional
 	if (exists $vals->{is_set}) {
 		return sub {
 			print STDERR "# checking set? $attr\n" if $debug;
-			return to_text(lookup($attr->get('is_set')), $attr);
+			return to_text(lookup($attr->get('is_set'), 0, $attr), $attr);
 		};
 	} elsif (exists $vals->{expr}) {
 		my $expr = $expr_grammar->conditional($attr->raw('expr'));

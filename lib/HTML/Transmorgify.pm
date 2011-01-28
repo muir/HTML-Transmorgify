@@ -35,7 +35,7 @@ require Exporter;
 use Module::Load;
 use HTML::Transmorgify::Symbols;
 
-our $VERSION = 0.03;
+our $VERSION = 0.04;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(dangling);
@@ -53,6 +53,7 @@ our @EXPORT_OK = qw(
 	postbuf
 	module_bits
 	boolean
+	bomb
 	%variables
 	%transformations
 	%dispatch
@@ -68,6 +69,8 @@ our @EXPORT_OK = qw(
 	$modules
 	$result
 	$query_param
+	$original_file
+	$original_line
 	);
 
 our $tagset;
@@ -81,6 +84,8 @@ our %compiled;			# cache of compiled text -> $rbuf
 our $intercept_okay = 0;
 our $input_file;
 our $input_line;
+our $original_file;
+our $original_line;
 our $xml_quoting = 0;
 our @result_array;
 our %dispatch;
@@ -110,6 +115,7 @@ sub allocate_result_type
 
 sub rbuf
 {
+	die if grep { ref($_) && reftype($_) ne 'CODE' } @_;
 	push (@$rbuf, @_);
 }
 
@@ -258,8 +264,8 @@ sub process
 	$opts = shift if ref $_[0];
 	local(%variables) = @_;
 	local($query_param) = $opts->{query_param} || {};
-	local($input_file) = $opts->{input_file} || (caller())[1];
-	local($input_line) = $opts->{input_line} || (caller())[2];
+	local($original_file) = local($input_file) = $opts->{input_file} || (caller())[1];
+	local($original_line) = local($input_line) = $opts->{input_line} || (caller())[2];
 	local($xml_quoting) = first_key('xml_quoting', 0, $opts, $self->{options});
 	my $buf = compile($modules, $tr);
 	local(@result_array) = ( '' );
@@ -288,6 +294,8 @@ sub run
 
 	for my $i (@$buf) {
 		if (ref $i) {
+use Data::Dumper;
+die Dumper($buf) unless reftype($i) eq 'CODE';
 			$i->();
 		} else {
 			printf STDERR "# Appending %s\n", dstring($i) if $debug;
@@ -516,7 +524,7 @@ sub bomb
 sub dangling
 {
 	my ($attr, $closed) = @_;
-	bomb(sprintf("<%s> found without a preceeding start tag", $attr->tag));
+	bomb(sprintf("<%s> found without a preceeding start tag in %s:%d", $attr->tag, $input_file, $input_line));
 }
 
 sub tobits

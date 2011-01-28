@@ -171,7 +171,7 @@ and then in the definition of the C<name> E<lt>macroE<gt>.
 When a C<E<lt>macroE<gt>> is expanded, the new value can be
 transformed.  The syntax is
 
- <macro macro_name endode="ENCODING">
+ <macro macro_name encode="ENCODING">
 
 Where C<ENCODING> is one of the following:
 
@@ -188,7 +188,7 @@ This is the default transformation.  Use
 
 if you do not want this.
 
-=item url
+=item uri / url
 
 Encode for a URL: Substitute C<%20> for space
 and all the rest of the substitutions 
@@ -250,6 +250,10 @@ The pre-defined functions are:
 
 absolute value
 
+=item defined()
+
+value is defined
+
 =item min()
 
 From L<List::Util>
@@ -307,7 +311,7 @@ C<file>.  Both of the following examples do the same thing:
 The filename must be a relative path.
 
 Files are searched for by traversing the array
-C<@HTML::Transmorgify::include_dirs> which is exported by request.
+C<@HTML::Transmorgify::Metatags::include_dirs> which is exported by request.
 If any elements in that array are CODE references, then they will
 be invoked with the filename that is being searched for as an 
 argument.  Their return value should be undef or a filename.
