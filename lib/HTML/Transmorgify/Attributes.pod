@@ -37,18 +37,18 @@ C<E<lt>$tagsE<gt>>.
 =item \@atvals
 
 This is an array of pairs that could be turned into a hash
-through simple assingment.  The "key" side of the pair is the
-attribute name.  The "value" side of the pair is the atribute
+through simple assingment.  The I<key> side of the pair is the
+attribute name.  The I<value> side of the pair is the atribute
 value.  For attributes that do not have a value, like C<checked> in
 
- <input type=checkbox name=checky value=valued checked>
+ <input type=checkbox name=checky value=valued checked />
 
 the value should be undef.  Eg:
 
  my $attr = HTML::Transmorgify::Attributes->new("input",
  	[ type => 'checkbox, name => 'checky', 
 	value => 'valued', checked => undef ],
-	0)
+	1)
 
 =item $closed
 

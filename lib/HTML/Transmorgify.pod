@@ -13,6 +13,7 @@
  $magic->mixin('HTML::Transmorgify::FormDefaults');
 
  my $output = $magic->process($input_text, { %options }, %variables);
+ my %output_by_type = $magic->process($input_text, { %options }, %variables);
 
 =head1 DESCRIPTION
 
@@ -62,18 +63,63 @@ have them yet.
 
 It notices roll-over images and adds javascript to display them.
 
-As of July 21st, 2010, this addon is not yet complete.
+As of January 2011, this addon is not yet complete.
 
 =back
 
 Additional modules can be added to the framework.
 
+=head1 USING HTML::Transmorgify
 
+By itself, HTML::Transmorgify doesn't do anything useful.  You need to
+blend in one of the addon modules or write your own.  
+
+You invoke HTML::Transmorgify with:
+
+ my $output = $magic->process($input_text, { %options }, %variables);
+
+or
+
+ my %output_by_type = $magic->process($input_text, { %options }, %variables);
+
+In array context, the results from processing templates are returned 
+as a hash, mapping the type of result to the result string.  Two result
+types are always present: C<text> and C<script>.  Other result types 
+may be added by add-on modules. 
+
+Currently, all of the options in C<{ %options }> are made available to 
+addon modules via the C<$invocation_options> variable.  
+In additon the
+following items are singled out and have defined meanings:
+
+=over 15
+
+=item query_param
+
+A reference to a L<CGI.pm>-style query parameters hash.
+
+=item input_file
+
+The filename from which the C<$input_text> came from.
+
+=item input_line
+
+A line-number offset from the beginning of the input_file
+so that error messages can refer to the line number of the
+error.
+
+=back
+
+The C<%variables> are used by L<HTML::Transmorgify::Metatags> as pre-defined
+macro values.  They can be strings, hashes, arrays, or objects.  If they're
+objects, they should inherit from L<HTML::Transmorgify::ObjectGlue>.
 
 =head1 WRITING ADDON MODULES
 
 HTML::Transmorgify compiles HTML.  It compiles HTML into an
-array of callbacks and literals.
+array of callbacks and literals.  It then executes the compiled
+array.  Compilation output from an input string is cached for 
+reuse.  Files are compiled separately.
 
 When you write an addon module, you
 register to be called back for particular HTML tags.  
@@ -107,12 +153,12 @@ you are creating a template language like what is done in L<HTML::Transmorgify::
 
 For situations where you are making an adjustment to regular HTML tags, you usually want
 a shared tag.  For example, L<HTML::Transmorgify::FormChecksum> and 
-L<HTML::Transmorgify::FormDefault> both need to be invoked at compile time for 
-E<lt>inputE<gt> tags.
+L<HTML::Transmorgify::FormDefault> both modify forms and attach callbacks to the
+E<lt>inputE<gt> tags.  
 
 Shared tags must be handled carefully so that the multiple modules that are acting on
 a tag do not get in each other's way.  Not everything can be handled by with a shared
-tag.
+tag
 For example, the E<lt>foreachE<gt> tag defined in
 L<HTML::Transmorgify::Metatags> is an exclusive tag.
 
@@ -359,6 +405,13 @@ to the name of the invoking package (__PACKAGE__).
 
 =back
 
+=head1 NAMING
+
+Calvin & Hobbs used to transmogrify not transmorgify things.  This module will be renamed
+to fix my spelling mistake soon.  Other API changes may still be made.  
+Please contact the author if you want to be included in dicussions of this
+module's future.
+
 =head1 SEE ALSO
 
 Other modules that do similar things:
@@ -370,10 +423,9 @@ David Muir Sharnoff E<lt>muir at idiom dot orgE<gt>
 
 Development of this module is hosted on github: L<http://github.com/muir/HTML--Transmorgify>.
 
+Some parts of this module are Copyright (C) Google, Inc.
+
 =head1 LICENSE
 
-Yahoo Inc may make any use of this module including publishing 
-modified copies with a license of their own choosing.
-
-Everyone else: your choice of LGPL or Artistic License.
+Your choice of LGPL or Artistic License.
 

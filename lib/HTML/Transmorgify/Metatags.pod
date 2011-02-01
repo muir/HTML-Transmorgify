@@ -196,7 +196,11 @@ handled by L<URI::Escape>.
 
 =item comment
 
-Throw away the value and return the empty string.
+Throw away the value and return the empty string.  
+XXX currently this still evaluates things within the
+comment, it's just the final result that is tossed.
+XXX add a <silent> or <empty> tag to supplant the
+current <comment> and have <comment> ignore its contents.
 
 =item none
 
@@ -316,4 +320,52 @@ If any elements in that array are CODE references, then they will
 be invoked with the filename that is being searched for as an 
 argument.  Their return value should be undef or a filename.
 
+=head1 DIVERSIONS
+
+HTML::Transmorgify::Metatags provides diversions.  The macros that
+control this are C<E<lt>captureE<gt>> and C<E<lt>playbackE<gt>>.  What is capture'd is
+removed from the normal output flow of the document.  It can be
+included somewhere else with C<E<lt>playbackE<gt>>.  Diversions do not 
+effect the runtime execution order so the text for a capture will 
+be captured sequenced as if the capture didn't exist.
+
+For example you have:
+
+ Before
+ <define x value=before>
+ <capture A>
+ A
+ x1=<macro x>
+ <define x value=A>
+ x2=<macro x>
+ </capture A>
+ After
+ x3=<macro x>
+ <define x value=after>
+ <playback A />
+
+You'll get:
+
+  Before
+  After
+  x3=A
+  A
+  x1=before
+  x2=A
+
+Diversions are resolved as a post-processing step so
+the C<E<lt>captureE<gt>> and C<E<lt>playbackE<gt>> tags can be used in nearly any order.  
+You can C<E<lt>playbackE<gt>> a diverison before it is saved wtih C<E<lt>captureE<gt>>.
+
+A C<E<lt>playbackE<gt>> inside a C<E<lt>captureE<gt>> creates a dependency:
+the playback'ed diversion must be resolved before the catpure'd diversion.  
+Circular dependencies are not allowed.
+
+=head1 RESERVED WORDS
+
+The following macros/variables are reserved for future use and should
+not be used at the current time:
+
+	_diversions
+	_current_diversion
 

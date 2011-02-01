@@ -78,6 +78,19 @@ thing: 1 * two
 thing: 2 * three
 thing: 5 * array15
 
+>>>>>>>>>>>>>>>>>>TEST nested if
+<define x 1>
+<define y 1>
+<if is_set=x>x
+<if is_set=z>z
+<else>Z
+</if>
+<else>X</if>
+y
+>>>>>RESULT
+x
+Z
+y
 END_OF_TESTS
 
 shift(@tests);

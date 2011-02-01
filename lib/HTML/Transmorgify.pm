@@ -1,24 +1,10 @@
 
-# y out at 5:20 on oct 19
-
 #
-# <if expr="">
-# <if is_set="">
-# <elsif >
-# </if>
+# Setup and initialization is done with objects, but execution
+# proceedural code using local() variables for state.  This
+# imposes a recusion model on the control flow, but allows
+# previous states to automatically resume.
 #
-# <define foobar>alsdjflasdj </define>
-# <define foobar var=val>alkjdfladsjf <macro val></define>
-#
-# <macro foobar>
-#
-# <foreach item>
-#	<redo>
-#	<next>
-#	<last>
-#	<first>    ...  </first>
-# </foreach>
-# 
 
 package HTML::Transmorgify;
 
@@ -35,7 +21,7 @@ require Exporter;
 use Module::Load;
 use HTML::Transmorgify::Symbols;
 
-our $VERSION = 0.04;
+our $VERSION = 0.06;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(dangling);
@@ -48,6 +34,7 @@ our @EXPORT_OK = qw(
 	capture_compile
 	queue_intercept
 	queue_capture
+	allocate_result_type
 	eat_cr
 	rbuf
 	postbuf
@@ -71,6 +58,8 @@ our @EXPORT_OK = qw(
 	$query_param
 	$original_file
 	$original_line
+	$invocation_options
+	$process_text_ref
 	);
 
 our $tagset;
@@ -93,6 +82,9 @@ our %priorities;
 our %queued_intercepts;
 our @queued_captures;
 our @post_intercept_push;
+our $invocation_options;
+our $wrap_compile_cb;
+our $process_text_ref;
 
 our %result_index = ( text => 0, script => 1 );
 our %reverse_result_index = reverse %result_index;
@@ -152,6 +144,7 @@ sub new
 		packages	=> {},
 		modules		=> '',
 		options		=> \%opts,
+		pre_compile_cb	=> [],
 	}, $pkg;
 	return $self;
 }
@@ -200,6 +193,12 @@ sub intercept_shared
 			$dispatch{$t} = HTML::Transmorgify::Stack->more($tag_pkg);
 		}
 	}
+}
+
+sub intercept_pre_compile
+{
+	my ($self, $cb) = @_;
+	push(@{$self->{pre_compile_cb}}, $cb);
 }
 
 sub queue_capture
@@ -257,28 +256,24 @@ sub process
 	die unless blessed $self;
 	local($tagset) = $self->{tagset};
 	local($modules) = $self->{modules};
-	my $tr = \$_[0];
+	local($process_text_ref) = \$_[0];
 	local($intercept_okay) = 1;
 	shift;
-	my $opts = {};
-	$opts = shift if ref $_[0];
+	local($invocation_options) = {};
+	$invocation_options = shift if ref $_[0];
 	local(%variables) = @_;
-	local($query_param) = $opts->{query_param} || {};
-	local($original_file) = local($input_file) = $opts->{input_file} || (caller())[1];
-	local($original_line) = local($input_line) = $opts->{input_line} || (caller())[2];
-	local($xml_quoting) = first_key('xml_quoting', 0, $opts, $self->{options});
-	my $buf = compile($modules, $tr);
+	local($query_param) = $invocation_options->{query_param} || {};
+	local($original_file) = local($input_file) = $invocation_options->{input_file} || (caller())[1];
+	local($original_line) = local($input_line) = $invocation_options->{input_line} || (caller())[2];
+	local($xml_quoting) = first_key('xml_quoting', 0, $invocation_options, $self->{options});
+	$_->($self) for @{$self->{pre_compile_cb}};
+	my $buf = compile($modules, $process_text_ref);
 	local(@result_array) = ( '' );
 #print Dumper([__FILE__, __LINE__, $rbuf]) if $debug;
 	run($buf);
-	$self->post_run();
 	return map { $_ => $result_array[$result_index{$_}] } keys %result_index
 		if wantarray;
 	return $result_array[0];
-}
-
-sub post_run
-{
 }
 
 
@@ -349,7 +344,15 @@ confess() unless defined $$textref;
 	}
 	local($rbuf) = \my @rbuf;
 	pos($$textref) = 0;
-	continue_compile(undef, undef, undef);
+	my $ccb = sub {
+		continue_compile(undef, undef, undef);
+	};
+	if ($wrap_compile_cb) {
+		local($wrap_compile_cb);
+		$wrap_compile_cb->($ccb);
+	} else {
+		$ccb->();
+	}
 	$compiled{$cacheline}{$md5} = \@rbuf;
 	printf STDERR "# Done compile(%s, %s) now at %d\n", tobits($cacheline), scalar(%$tagset), pos($$textref) if $debug;
 	return $rbuf;
@@ -531,7 +534,6 @@ sub tobits
 {
 	join('', unpack("b*", $_[0]));
 }
-
 
 package HTML::Transmorgify::Attributes;
 
