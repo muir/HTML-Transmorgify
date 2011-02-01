@@ -28,3 +28,4 @@ t/form_default.t
 t/howperlworks.t
 t/metatags.t
 t/symbols.t
+README
