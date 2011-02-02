@@ -21,7 +21,7 @@ require Exporter;
 use Module::Load;
 use HTML::Transmorgify::Symbols;
 
-our $VERSION = 0.07;
+our $VERSION = 0.08;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(dangling);
@@ -813,7 +813,7 @@ package HTML::Transmorgify::MutuallyExclusive;
 
 use strict;
 use warnings;
-use HTML::Transmorgify qw($debug);
+import HTML::Transmorgify qw($debug);
 
 sub call
 {
@@ -860,7 +860,7 @@ package HTML::Transmorgify::Exclusive;
 
 use strict;
 use warnings;
-use HTML::Transmorgify qw($debug);
+import HTML::Transmorgify qw($debug);
 
 sub new
 {
@@ -902,7 +902,6 @@ package HTML::Transmorgify::Stack;
 
 use strict; 
 use warnings;
-
 import HTML::Transmorgify qw(%priorities $debug continue_compile capture_compile rbuf);
 
 #
