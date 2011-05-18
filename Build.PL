@@ -18,6 +18,7 @@ my $build = Module::Build->new (
 		'Scalar::Util' => 0,
 		'List::Util' => 0,
 		'Image::Size' => 0,
+		'Module::Load' => 0,
 	},
 	build_requires => {
 		'Parse::RecDescent' => 0,
