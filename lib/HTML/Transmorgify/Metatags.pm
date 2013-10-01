@@ -622,7 +622,7 @@ sub foreach_tag
 				my $i = 0;
 				push(@a, map { exists($r->[$i++]) ? ($i-1 => $_) : () } @$r);
 			} elsif (reftype($r) eq 'HASH') {
-				push(@a, %$r);
+				push(@a, map { $_ => $r->{$_} } sort keys %$r);
 			} elsif (ref($r)) {
 				die;
 			} elsif (defined $r) {
