@@ -8,10 +8,10 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(new_hash new_array);
 
-my $sym = "gensym_00000";
+my $counter = 0;
 sub new_hash
 {
-	my $x = $sym++;
+	my $sym = sprintf("hash_%5d", $counter++);
 	no strict 'refs';
 	my $h = \%{__PACKAGE__."::$sym"};
 	%$h = @_;
@@ -20,7 +20,7 @@ sub new_hash
 
 sub new_array
 {
-	my $x = $sym++;
+	my $sym = sprintf("array_%5d", $counter++);
 	no strict 'refs';
 	my $a = \@{__PACKAGE__."::$sym"};
 	@$a = @_;
