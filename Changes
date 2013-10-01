@@ -1,7 +1,10 @@
 Revision history for Perl module HTML::Transmorgify
 
+0.11 2013/10/01
 
+ - bugfixes to support more modern perls
  - replace CHANGELOG with Changes
+ - remove debug warnings
 
 0.05 2011/01/30
  - bugfixes
