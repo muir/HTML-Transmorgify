@@ -1,5 +1,5 @@
 Build.PL
-CHANGELOG
+Changes
 lib/HTML/Transmorgify.pm
 lib/HTML/Transmorgify.pod
 lib/HTML/Transmorgify/Attributes.pm

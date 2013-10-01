@@ -1,0 +1,11 @@
+Revision history for Perl module HTML::Transmorgify
+
+
+ - replace CHANGELOG with Changes
+
+0.05 2011/01/30
+ - bugfixes
+ - documentation fixes
+ - code comments
+ - added <capture> & <playback> to Metatags.pm
+ 
