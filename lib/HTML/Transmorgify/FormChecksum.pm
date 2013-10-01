@@ -232,7 +232,7 @@ sub form_tag
 		my $particular_values = join(" ",
 			map { 
 				join("'", 
-					map { uri_escape($_) } keys %{$pval{$_}}
+					map { uri_escape($_) } sort keys %{$pval{$_}}
 				)
 			} sort keys %pval
 		);
@@ -246,6 +246,7 @@ sub form_tag
 
 		$str .= join(" ", map { $_ => uri_escape($hval{$_}) } sort keys %hval );
 		my $csum = md5_hex($str);
+#print STDERR "STR = '$str' = $csum\n";
 
 		if ($HTML::Transmorgify::debug) {
 #print STDERR Dumper(\%pval);

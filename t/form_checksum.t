@@ -76,8 +76,8 @@ Before
 <input type="submit" name="sub" value="sval1">
 <input type="submit" name="sub" value="sval2">
 <input type="submit" name="sub" value="sval3">
-<input type="hidden" name=" constraint" value="sub'm sval3'sval2'sval1"
-><input type="hidden" name=" csum" value="c9aa0ea2c50c9ba3411e598a3edee65a"
+<input type="hidden" name=" constraint" value="sub'm sval1'sval2'sval3"
+><input type="hidden" name=" csum" value="02321de9ef83742d2535f4f855d67705"
 ></form>
 After
 >>>>SUBMIT
@@ -123,8 +123,8 @@ Before
 <textarea name="ta">FOO</textarea>
 <input type="checkbox" name="cb1">
 <input type="submit" name="sub1" value="sub1v1">
-<input type="hidden" name=" constraint" value="cb1'M'h1'v'radio1'm'select1'M'select2'M'sub1'm'ta'x on r1v1'r1v3'r1v2 s1v2's1v1 s2v2's2v1 sub1v1"
-><input type="hidden" name=" csum" value="7cefcacbbe7f5a187dceab4ba3d17d65"
+<input type="hidden" name=" constraint" value="cb1'M'h1'v'radio1'm'select1'M'select2'M'sub1'm'ta'x on r1v1'r1v2'r1v3 s1v1's1v2 s2v1's2v2 sub1v1"
+><input type="hidden" name=" csum" value="add3329cf65eceb2b48d3b538bd0ce4b"
 ></form>
 After
 >>>>SUBMIT
