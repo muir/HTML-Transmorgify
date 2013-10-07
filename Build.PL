@@ -24,6 +24,11 @@ my $build = Module::Build->new (
 		'Parse::RecDescent' => 0,
 		'Test::Differences' => 0,
 	},
+	meta_merge => {
+		resources => {
+			repository => 'https://github.com/muir/HTML-Transmorgify',
+		},
+	},
 );
 $build->create_build_script;
 
